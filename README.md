@@ -1,38 +1,35 @@
+# 🚀 **DEGERIS PANEL — Version 1.5.2 | نسخه 1.5.2**
+
 ![Degeris Panel](https://raw.githubusercontent.com/Degeris/panelFile/main/degerisbanner.png)
-# 🚀 **DEGERIS PANEL — نسخه 1.5.2**
+
+**🇮🇷 [فارسی](#-فارسی) | 🇬🇧 [English](#-english)**
+
+# 🇮🇷 فارسی
 
 با سلام و درود 🌹
 
 این پنل نسخه **فورک‌شده و توسعه‌یافته** از پنل XUI است که توسط **Degeris Team** آماده و منتشر شده است.
 
-نسخه فعلی پنل **1.5.2** است و با هدف ارائه‌ی یک تجربه‌ی ساده، سریع و کاربردی برای مدیریت سرویس‌های VPN و سرور توسعه داده شده است.
+نسخه فعلی پنل **1.5.2** است و با هدف ارائه یک تجربه ساده، سریع و کاربردی برای مدیریت سرویس‌های VPN و سرور توسعه داده شده است.
 
-در این نسخه قابلیت‌ها و بهینه‌سازی‌های مختلفی به پنل اضافه شده است؛ از جمله قابلیت **اضافه کردن ادمین**، امکانات مدیریتی جدید، قابلیت‌های **ضرب مثبت، ضرب منفی و ضرب زدن**، بهینه‌سازی عملکرد پنل و بهبود تجربه کاربری.
+## 🔥 قابلیت‌های DEGERIS
 
-## 🔥 **قابلیت‌های DEGERIS**
-
-- 👤 **مدیریت ادمین‌ها و امکان اضافه کردن ادمین**
+- 👤 **مدیریت ادمین و امکان اضافه کردن ادمین**
 - 👥 **مدیریت کاربران و کانفیگ‌ها**
 - ➕ **قابلیت ضرب مثبت**
 - ➖ **قابلیت ضرب منفی**
 - ✖️ **قابلیت ضرب زدن**
-- 🔄 **پشتیبانی از تونل‌های Reverse / ریورس**
-- ⚙️ **بهینه‌سازی عملکرد، سرعت و مصرف منابع پنل**
-- 🛠️ **مدیریت ساده‌تر سرویس‌ها و تنظیمات پنل**
-- 🔐 **پشتیبانی از تنظیمات امنیتی و SSL**
+- 🔄 **پشتیبانی از Reverse Tunnel**
+- ⚙️ **بهینه‌سازی سرعت و عملکرد پنل**
+- 🔐 **پشتیبانی از SSL و تنظیمات امنیتی**
 - 🗄️ **پشتیبانی از SQLite و PostgreSQL**
-- 📦 **نصب خودکار پیش‌نیازهای موردنیاز**
-- 🚀 **نصب و راه‌اندازی سریع با Installer اختصاصی Degeris**
-- 🧩 **پشتیبانی از چندین پروتکل و روش انتقال**
-- 🌐 **مدیریت کانفیگ‌های متنوع برای استفاده‌های مختلف**
-- 📊 **بهینه‌سازی تجربه کاربری و مدیریت پنل**
-- 🔧 **بهبود و توسعه بخش‌های مدیریتی پنل**
+- 📦 **نصب خودکار پیش‌نیازها**
+- 🚀 **Installer اختصاصی Degeris**
+- 🧩 **پشتیبانی از پروتکل‌ها و روش‌های انتقال مختلف**
+- 🌐 **مدیریت کامل کاربران و کانفیگ‌ها**
+- 🔧 **بهبود رابط و تجربه مدیریت پنل**
 
-## 🔐 **پروتکل‌های پشتیبانی‌شده**
-
-با Degeris می‌توانید کانفیگ‌های امن و متنوعی برای پروتکل‌های مختلف ایجاد و مدیریت کنید؛ از جمله **VMess، VLESS، Shadowsocks و Hysteria** و سایر پروتکل‌های پشتیبانی‌شده توسط هسته و تنظیمات پنل.
-
-### 🌐 پروتکل‌ها و روش‌های انتقال
+## 🔐 پروتکل‌های پشتیبانی‌شده
 
 - 🔹 **VMess**
 - 🔹 **VLESS**
@@ -44,23 +41,22 @@
 - 🔹 **HTTP / HTTP Upgrade**
 - 🔹 **TLS / HTTPS**
 - 🔹 **Reality**
-- 🔹 **و سایر روش‌های انتقال و تنظیمات قابل پشتیبانی توسط هسته و نسخه پنل**
+- 🔹 **Reverse Tunnel**
+- 🔹 **و سایر روش‌های انتقال پشتیبانی‌شده توسط هسته پنل**
 
 ## ⚡ آموزش نصب
 
-برای نصب پنل، ابتدا وارد سرور خود شوید و سپس دستور زیر را در ترمینال وارد کنید:
+برای نصب پنل، وارد سرور خود شوید و دستور زیر را وارد کنید:
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/Degeris/Degeris/main/install.sh)
 ```
 
-کافی است دستور بالا را **کپی کنید و داخل ترمینال سرور Paste کنید**؛ فرآیند نصب به‌صورت خودکار آغاز می‌شود.
-
-Installer فایل‌های موردنیاز و پیش‌نیازهای لازم را آماده و نصب می‌کند؛ بنابراین برای راه‌اندازی اولیه نیازی به انجام مراحل پیچیده یا نصب دستی موارد موردنیاز ندارید.
+Installer به‌صورت خودکار فایل‌ها و پیش‌نیازهای موردنیاز را نصب و آماده می‌کند.
 
 ## ▶️ اجرای پنل
 
-پس از نصب موفق پنل، برای باز کردن منوی مدیریت کافی است دستور زیر را در ترمینال وارد کنید:
+بعد از نصب، برای باز کردن منوی مدیریت پنل:
 
 ```bash
 Degerist
@@ -72,23 +68,116 @@ Degerist
 degerist
 ```
 
-پنل به‌صورت پیش‌فرض روی پورت `2053` اجرا می‌شود، مگر اینکه پورت آن را تغییر دهید.
+پورت پیش‌فرض پنل:
+
+```text
+2053
+```
 
 ## 🌐 درباره Degeris
 
 **Degeris Team** با هدف توسعه ابزارها و راهکارهای ساده، سریع و کاربردی برای مدیریت سرویس‌های VPN و سرور فعالیت می‌کند.
 
-این پروژه با تمرکز بر سادگی نصب، مدیریت آسان، بهینه‌سازی عملکرد و ارائه امکانات متنوع برای مدیریت کانفیگ‌ها و کاربران توسعه داده شده است.
+این پروژه با تمرکز بر نصب آسان، مدیریت ساده، عملکرد بهتر و امکانات متنوع توسعه داده شده است.
 
 ## 📱 ارتباط با ما
 
-**Telegram Channel:**
+**Telegram Channel:**  
 https://t.me/DegerisVPN
 
-**Telegram Admin:**
+**Telegram Admin:**  
 https://t.me/Degeris
 
-**GitHub:**
+**GitHub:**  
 https://github.com/Degeris
+
+---
+
+# 🇬🇧 English
+
+**Degeris Panel** is a **forked and enhanced version of XUI**, developed and released by **Degeris Team**.
+
+The current version is **1.5.2**, designed to provide a simple, fast and practical solution for VPN and server management.
+
+## 🔥 Features
+
+- 👤 **Admin management and admin creation**
+- 👥 **User and configuration management**
+- ➕ **Positive multiplier**
+- ➖ **Negative multiplier**
+- ✖️ **Multiplier management**
+- 🔄 **Reverse Tunnel support**
+- ⚙️ **Performance and speed optimizations**
+- 🔐 **SSL and security support**
+- 🗄️ **SQLite and PostgreSQL support**
+- 📦 **Automatic dependency installation**
+- 🚀 **Custom Degeris Installer**
+- 🧩 **Multiple protocols and transport methods**
+- 🌐 **Advanced user and configuration management**
+- 🔧 **Improved administration and user experience**
+
+## 🔐 Supported Protocols
+
+- 🔹 **VMess**
+- 🔹 **VLESS**
+- 🔹 **Shadowsocks**
+- 🔹 **Hysteria**
+- 🔹 **TCP**
+- 🔹 **WebSocket (WS)**
+- 🔹 **gRPC**
+- 🔹 **HTTP / HTTP Upgrade**
+- 🔹 **TLS / HTTPS**
+- 🔹 **Reality**
+- 🔹 **Reverse Tunnel**
+- 🔹 **And other transports supported by the panel core**
+
+## ⚡ Installation
+
+Run the following command on your server:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Degeris/Degeris/main/install.sh)
+```
+
+The installer automatically installs and prepares the required dependencies.
+
+## ▶️ Run the Panel
+
+After installation, run:
+
+```bash
+Degerist
+```
+
+or:
+
+```bash
+degerist
+```
+
+Default panel port:
+
+```text
+2053
+```
+
+## 🌐 About Degeris
+
+**Degeris Team** develops simple, fast and practical tools for VPN and server management, focusing on easy installation, simple administration and performance optimization.
+
+## 📱 Contact
+
+**Telegram Channel:**  
+https://t.me/DegerisVPN
+
+**Telegram Admin:**  
+https://t.me/Degeris
+
+**GitHub:**  
+https://github.com/Degeris
+
+---
+
+### ❤️ Degeris Team
 
 **Degeris Team © 2026**
