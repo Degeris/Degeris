@@ -7,7 +7,7 @@ Degeris Team یک پنل مدیریتی جدید و قدرتمند برای مد
 ⚡ نصب سریع
 
 برای نصب، کافی است دستور زیر را روی سرور خود اجرا کنید:
-
+'''bash
 bash <(curl -fsSL https://raw.githubusercontent.com/Degeris/Degeris/main/install.sh)
 
 کافی است دستور بالا را کپی کنید و داخل ترمینال سرور Paste کنید.
