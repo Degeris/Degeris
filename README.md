@@ -1,3 +1,4 @@
+![Degeris Panel](https://raw.githubusercontent.com/Degeris/panelFile/main/degerisbanner.png)
 # 🚀 **DEGERIS PANEL — نسخه 1.5.2**
 
 با سلام و درود 🌹
