@@ -1,3 +1,6 @@
+
+![Degeris Panel](assets/degerisbanner.png)
+
 # 🚀 Degeris Panel — نسخه 1.5.2
 
 با سلام و درود 🌹
