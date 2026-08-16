@@ -14,7 +14,7 @@ ZIP_FILE="$TMP_DIR/setup.zip"
 APP_DIR="$TMP_DIR/app"
 
 # Download setup.zip from GitHub Release
-curl -fL "https://github.com/Degeris/Degeris/releases/download/1.0.0/setup.zip" -o "$ZIP_FILE"
+curl -fL "https://github.com/Degeris/Degeris/releases/download/1.52/setup.zip" -o "$ZIP_FILE"
 
 # Extract setup.zip
 mkdir -p "$APP_DIR"
