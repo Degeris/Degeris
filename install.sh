@@ -64,7 +64,6 @@ REQUESTED_VERSION="${1:-}"
 ###############################################################################
 
 TMP_DIR="$(mktemp -d /tmp/degeris-installer.XXXXXX)"
-
 ZIP_FILE="$TMP_DIR/setup.zip"
 APP_DIR="$TMP_DIR/app"
 
@@ -83,17 +82,15 @@ mkdir -p "$APP_DIR"
 echo "[1/6] آماده‌سازی سیستم..."
 echo
 
+export DEBIAN_FRONTEND=noninteractive
+
 if command -v apt-get >/dev/null 2>&1; then
 
     echo "در حال به‌روزرسانی مخازن..."
-
-    export DEBIAN_FRONTEND=noninteractive
-
     apt-get update -y
 
     echo
     echo "در حال نصب curl و unzip..."
-
     apt-get install -y curl unzip
 
 elif command -v dnf >/dev/null 2>&1; then
@@ -125,92 +122,83 @@ echo
 
 if [[ -n "$REQUESTED_VERSION" ]]; then
 
+    # هیچ Regex یا محدودیت نسخه‌ای وجود ندارد.
+    # هر چیزی که کاربر وارد کند دقیقاً به عنوان Tag استفاده می‌شود.
+
     VERSION="$REQUESTED_VERSION"
 
     echo "نسخه انتخاب‌شده:"
     echo
     echo "    $VERSION"
+    echo
 
 else
 
     echo "نسخه‌ای مشخص نشده است."
-    echo "در حال دریافت آخرین نسخه Degeris..."
+    echo "در حال پیدا کردن آخرین Release Degeris..."
+    echo
 
-    API_URL="https://api.github.com/repos/${REPO}/releases/latest"
+    LATEST_URL="https://github.com/${REPO}/releases/latest"
 
-    VERSION="$(
-        curl -fsSL \
+    FINAL_URL="$(
+        curl -sS \
+            -L \
             --retry 3 \
             --retry-delay 2 \
             --connect-timeout 20 \
-            --max-time 30 \
-            -H "Accept: application/vnd.github+json" \
-            -H "User-Agent: Degeris-Installer" \
-            "$API_URL" 2>/dev/null |
-        sed -nE 's/.*"tag_name"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' |
+            --max-time 60 \
+            -o /dev/null \
+            -w '%{url_effective}' \
+            -A "Mozilla/5.0 Degeris-Installer" \
+            "$LATEST_URL" \
+            2>/dev/null || true
+    )"
+
+    VERSION="$(
+        printf '%s\n' "$FINAL_URL" |
+        sed -nE 's#^.*/releases/tag/([^/?#]+).*$#\1#p' |
         head -n 1
-    )" || true
+    )"
 
     if [[ -z "$VERSION" ]]; then
 
         echo
-        warn "تشخیص خودکار آخرین نسخه ناموفق بود."
+        warn "تشخیص خودکار Latest Release موفق نبود."
         echo
-        read -r -p "شماره نسخه را وارد کنید (مثلاً 1.52 یا 1.5.2): " VERSION
-
-        [[ -n "$VERSION" ]] || fail "هیچ نسخه‌ای وارد نشد."
-
-    else
-
+        echo "لطفاً شماره نسخه را وارد کنید."
         echo
-        ok "آخرین نسخه: $VERSION"
+        echo "مثال:"
+        echo "  1.0"
+        echo "  1.0.0"
+        echo "  1.5"
+        echo "  1.5.0"
+        echo "  1.52"
+        echo "  1.5.2"
+        echo "  2.0.0"
+        echo "  4.0.0"
+        echo
+
+        read -r -p "Version: " VERSION
 
     fi
 
 fi
 
 ###############################################################################
-# VERSION VALIDATION
+# VERSION CHECK
 ###############################################################################
 
-# پشتیبانی از:
-# 1.0
-# 1.52
-# 1.5.0
-# 1.5.2
-# 2.0
-# 2.0.0
-# 4.0.0
-#
-# همچنین Tagهای ساده عددی چندبخشی را قبول می‌کند.
-
-if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+([.][0-9]+)+$'; then
-
-    echo
-    echo "نسخه واردشده:"
-    echo "    $VERSION"
-    echo
-
-    fail "فرمت نسخه نامعتبر است.
-
-نمونه‌های معتبر:
-
-1.0
-1.1
-1.52
-1.0.0
-1.1.0
-1.1.1
-1.2.0
-1.2.1
-1.2.2
-1.5.0
-1.5.2
-2.0.0
-3.0.0
-4.0.0"
-
+if [[ -z "$VERSION" ]]; then
+    fail "هیچ نسخه‌ای مشخص نشده است."
 fi
+
+# هیچ بررسی فرمت نسخه انجام نمی‌شود.
+# 1.52
+# 1.5.2
+# 1.0
+# v1.5.0
+# release-1
+# هر Tag معتبر GitHub قابل استفاده است.
 
 ###############################################################################
 # DOWNLOAD URL
@@ -220,15 +208,13 @@ DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${VERSION}/${ASSET}"
 
 echo
 echo "=============================================="
-echo "             DEGERIS $VERSION"
+echo "          DEGERIS VERSION: $VERSION"
 echo "=============================================="
 echo
 echo "Release:"
-echo
 echo "https://github.com/${REPO}/releases/tag/${VERSION}"
 echo
 echo "Asset:"
-echo
 echo "$ASSET"
 echo
 
@@ -239,29 +225,39 @@ echo
 echo "[3/6] دانلود setup.zip..."
 echo
 
-if ! curl -fL \
-    --retry 3 \
-    --retry-delay 2 \
-    --connect-timeout 20 \
+if ! curl \
+    -fL \
+    --retry 5 \
+    --retry-delay 3 \
+    --connect-timeout 30 \
     --max-time 0 \
-    -H "User-Agent: Degeris-Installer" \
+    -A "Mozilla/5.0 Degeris-Installer" \
     -o "$ZIP_FILE" \
     "$DOWNLOAD_URL"; then
 
     echo
+    echo "=============================================="
     fail "دانلود نسخه $VERSION ناموفق بود.
 
-بررسی کنید Release زیر وجود داشته باشد:
+آدرس مورد استفاده:
 
-$VERSION
+$DOWNLOAD_URL
 
-و داخل آن دقیقاً این فایل وجود داشته باشد:
+بررسی کنید:
 
-$ASSET"
+1. Release با Tag زیر وجود داشته باشد:
+   $VERSION
+
+2. داخل Release فایل زیر وجود داشته باشد:
+   setup.zip
+
+3. نام Tag دقیقاً با چیزی که وارد کرده‌اید یکی باشد."
 
 fi
 
-[[ -s "$ZIP_FILE" ]] || fail "فایل setup.zip خالی است."
+if [[ ! -s "$ZIP_FILE" ]]; then
+    fail "setup.zip خالی است."
+fi
 
 ok "setup.zip دانلود شد."
 
@@ -270,14 +266,16 @@ ok "setup.zip دانلود شد."
 ###############################################################################
 
 echo
-echo "[4/6] بررسی سلامت فایل..."
+echo "[4/6] بررسی سلامت setup.zip..."
 echo
 
 if ! unzip -t "$ZIP_FILE" >/dev/null 2>&1; then
+
     fail "setup.zip خراب یا ناقص است."
+
 fi
 
-ok "فایل ZIP سالم است."
+ok "setup.zip سالم است."
 
 ###############################################################################
 # EXTRACT
@@ -288,13 +286,15 @@ echo "[5/6] استخراج فایل‌ها..."
 echo
 
 if ! unzip -q "$ZIP_FILE" -d "$APP_DIR"; then
+
     fail "استخراج setup.zip ناموفق بود."
+
 fi
 
 ok "فایل‌ها استخراج شدند."
 
 ###############################################################################
-# FIND INSTALLER
+# FIND INSTALL.SH
 ###############################################################################
 
 echo
@@ -303,12 +303,15 @@ echo
 
 ORIGINAL_INSTALLER=""
 
+# حالت اول:
 if [[ -f "$APP_DIR/install.sh" ]]; then
 
     ORIGINAL_INSTALLER="$APP_DIR/install.sh"
 
 else
 
+    # حالت دوم:
+    # اگر install.sh داخل یک پوشه باشد
     ORIGINAL_INSTALLER="$(
         find "$APP_DIR" \
             -type f \
@@ -321,14 +324,16 @@ fi
 if [[ -z "$ORIGINAL_INSTALLER" || ! -f "$ORIGINAL_INSTALLER" ]]; then
 
     echo
-    echo "فایل‌های داخل setup.zip:"
+    echo "❌ install.sh داخل setup.zip پیدا نشد."
+    echo
+    echo "محتویات ZIP:"
     echo
 
-    find "$APP_DIR" -maxdepth 5 -type f | head -100
+    find "$APP_DIR" -maxdepth 5 -type f -print | head -100
 
     echo
 
-    fail "install.sh داخل setup.zip نسخه $VERSION پیدا نشد."
+    fail "Installer اصلی پیدا نشد."
 
 fi
 
@@ -356,6 +361,7 @@ bash "$ORIGINAL_INSTALLER"
 # COMPLETE
 ###############################################################################
 
+echo
 echo
 echo "=============================================="
 echo "        DEGERIS INSTALLATION COMPLETED"
