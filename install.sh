@@ -1,14 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-###############################################################################
-#                         DEGERIS INSTALLER
-#                  GitHub Release Bootstrap Installer
-###############################################################################
-
-REPO_OWNER="Degeris"
-REPO_NAME="Degeris"
-ASSET_NAME="setup.zip"
+REPO="Degeris/Degeris"
+ASSET="setup.zip"
 
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -46,22 +40,18 @@ echo
 echo "=============================================="
 echo
 
-###############################################################################
-# ROOT
-###############################################################################
-
 if [ "$(id -u)" -ne 0 ]; then
     fail "لطفاً Installer را با دسترسی root اجرا کنید."
 fi
 
 ###############################################################################
-# VERSION
+# ARGUMENT
 ###############################################################################
 
 REQUESTED_VERSION="${1:-}"
 
 ###############################################################################
-# REQUIRED COMMANDS
+# REQUIREMENTS
 ###############################################################################
 
 echo "[1/6] بررسی پیش‌نیازها..."
@@ -106,7 +96,7 @@ trap cleanup EXIT
 mkdir -p "$APP_DIR"
 
 ###############################################################################
-# GET VERSION
+# VERSION
 ###############################################################################
 
 echo
@@ -117,29 +107,42 @@ if [ -n "$REQUESTED_VERSION" ]; then
     VERSION="$REQUESTED_VERSION"
 
     echo
-    echo "نسخه انتخاب‌شده:"
-    echo "  $VERSION"
+    echo "نسخه انتخاب‌شده: $VERSION"
     echo
 
 else
 
     echo "نسخه‌ای مشخص نشده است."
-    echo "در حال دریافت آخرین نسخه Degeris..."
+    echo "در حال پیدا کردن آخرین نسخه..."
 
-    API_URL="https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest"
+    LATEST_URL="https://github.com/${REPO}/releases/latest"
 
-    RELEASE_JSON="$(curl -fsSL \
-        -H "Accept: application/vnd.github+json" \
-        "$API_URL")" || {
-        fail "دریافت آخرین نسخه از GitHub ناموفق بود."
-    }
+    FINAL_URL="$(
+        curl -sSIL \
+        --max-time 20 \
+        -o /dev/null \
+        -w '%{url_effective}' \
+        "$LATEST_URL" \
+        2>/dev/null
+    )" || true
 
-    VERSION="$(printf '%s\n' "$RELEASE_JSON" \
-        | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
-        | head -n 1)"
+    VERSION="$(
+        printf '%s\n' "$FINAL_URL" |
+        sed -nE 's#.*/releases/tag/([^/?#]+).*#\1#p'
+    )"
 
     if [ -z "$VERSION" ]; then
-        fail "شماره آخرین نسخه از GitHub دریافت نشد."
+
+        echo
+        warn "تشخیص خودکار آخرین نسخه ناموفق بود."
+        echo
+        echo "اگر نسخه را می‌دانید، می‌توانید مستقیم وارد کنید."
+        echo
+        read -r -p "نسخه را وارد کنید (مثلاً 1.5.0): " VERSION
+
+        if [ -z "$VERSION" ]; then
+            fail "هیچ نسخه‌ای وارد نشد."
+        fi
     fi
 
     echo
@@ -147,42 +150,32 @@ else
 fi
 
 ###############################################################################
-# VERSION CHECK
+# VERSION FORMAT
 ###############################################################################
 
 if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
 
     echo
-    warn "فرمت نسخه دریافت‌شده صحیح نیست:"
-    echo "  $VERSION"
-    echo
-    echo "فرمت صحیح مثال:"
-    echo "  1.0.0"
-    echo "  1.2.1"
-    echo "  1.5.0"
-    echo "  2.0.0"
-    echo "  4.0.0"
+    echo "نسخه دریافت‌شده:"
+    echo "$VERSION"
     echo
 
-    fail "Version نامعتبر است."
+    fail "فرمت نسخه صحیح نیست. مثال صحیح: 1.5.0"
 fi
 
 ###############################################################################
-# RELEASE URL
+# DOWNLOAD URL
 ###############################################################################
 
-DOWNLOAD_URL="https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${VERSION}/${ASSET_NAME}"
+DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${VERSION}/${ASSET}"
 
 echo
 echo "=============================================="
 echo "             DEGERIS $VERSION"
 echo "=============================================="
 echo
-echo "Release:"
-echo "https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/tag/${VERSION}"
-echo
-echo "Asset:"
-echo "$ASSET_NAME"
+echo "در حال دانلود:"
+echo "$DOWNLOAD_URL"
 echo
 
 ###############################################################################
@@ -190,8 +183,6 @@ echo
 ###############################################################################
 
 echo "[3/6] دانلود setup.zip..."
-
-echo
 
 if ! curl -fL \
     --retry 3 \
@@ -202,21 +193,21 @@ if ! curl -fL \
     "$DOWNLOAD_URL"; then
 
     echo
-    fail "نسخه $VERSION پیدا نشد یا فایل setup.zip در Release وجود ندارد."
+    fail "نسخه $VERSION یا فایل setup.zip پیدا نشد."
 fi
 
 if [ ! -s "$ZIP_FILE" ]; then
-    fail "فایل setup.zip خالی است."
+    fail "setup.zip خالی است."
 fi
 
 ok "setup.zip دانلود شد."
 
 ###############################################################################
-# ZIP TEST
+# TEST ZIP
 ###############################################################################
 
 echo
-echo "[4/6] بررسی فایل ZIP..."
+echo "[4/6] بررسی ZIP..."
 
 if ! unzip -t "$ZIP_FILE" >/dev/null 2>&1; then
     fail "setup.zip خراب یا ناقص است."
@@ -236,7 +227,7 @@ unzip -q "$ZIP_FILE" -d "$APP_DIR"
 ok "فایل‌ها Extract شدند."
 
 ###############################################################################
-# FIND INSTALL.SH
+# FIND INSTALLER
 ###############################################################################
 
 echo
@@ -247,32 +238,31 @@ ORIGINAL_INSTALLER=""
 if [ -f "$APP_DIR/install.sh" ]; then
     ORIGINAL_INSTALLER="$APP_DIR/install.sh"
 else
-    ORIGINAL_INSTALLER="$(find "$APP_DIR" -type f -name "install.sh" -print -quit)"
+    ORIGINAL_INSTALLER="$(
+        find "$APP_DIR" \
+        -type f \
+        -name "install.sh" \
+        -print -quit
+    )"
 fi
 
-if [ -z "$ORIGINAL_INSTALLER" ]; then
+if [ -z "$ORIGINAL_INSTALLER" ] || [ ! -f "$ORIGINAL_INSTALLER" ]; then
 
     echo
-    echo "فایل‌های داخل Release:"
+    echo "فایل‌های داخل setup.zip:"
     find "$APP_DIR" -maxdepth 3 -type f | head -50
     echo
 
-    fail "install.sh داخل setup.zip نسخه $VERSION پیدا نشد."
+    fail "install.sh داخل setup.zip پیدا نشد."
 fi
 
 chmod +x "$ORIGINAL_INSTALLER"
 
-ok "Installer اصلی پیدا شد:"
-echo
-echo "  $ORIGINAL_INSTALLER"
-echo
+ok "Installer اصلی پیدا شد."
 
-###############################################################################
-# RUN ORIGINAL INSTALLER
-###############################################################################
-
+echo
 echo "=============================================="
-echo "       شروع نصب Degeris نسخه $VERSION"
+echo "      شروع نصب Degeris نسخه $VERSION"
 echo "=============================================="
 echo
 
@@ -281,10 +271,6 @@ INSTALLER_DIR="$(dirname "$ORIGINAL_INSTALLER")"
 cd "$INSTALLER_DIR"
 
 bash "$ORIGINAL_INSTALLER"
-
-###############################################################################
-# COMPLETE
-###############################################################################
 
 echo
 echo "=============================================="
