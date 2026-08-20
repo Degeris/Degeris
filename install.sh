@@ -1,6 +1,11 @@
 #!/bin/bash
 set -euo pipefail
 
+###############################################################################
+#                         DEGERIS INSTALLER
+#                    GitHub Release Bootstrap
+###############################################################################
+
 REPO="Degeris/Degeris"
 ASSET="setup.zip"
 
@@ -40,43 +45,19 @@ echo
 echo "=============================================="
 echo
 
+###############################################################################
+# ROOT
+###############################################################################
+
 if [ "$(id -u)" -ne 0 ]; then
     fail "لطفاً Installer را با دسترسی root اجرا کنید."
 fi
 
 ###############################################################################
-# ARGUMENT
+# VERSION
 ###############################################################################
 
 REQUESTED_VERSION="${1:-}"
-
-###############################################################################
-# REQUIREMENTS
-###############################################################################
-
-echo "[1/6] بررسی پیش‌نیازها..."
-
-if ! command -v curl >/dev/null 2>&1 || ! command -v unzip >/dev/null 2>&1; then
-
-    echo "در حال نصب curl و unzip..."
-
-    if command -v apt-get >/dev/null 2>&1; then
-        export DEBIAN_FRONTEND=noninteractive
-        apt-get update -y
-        apt-get install -y curl unzip
-
-    elif command -v dnf >/dev/null 2>&1; then
-        dnf install -y curl unzip
-
-    elif command -v yum >/dev/null 2>&1; then
-        yum install -y curl unzip
-
-    else
-        fail "Package Manager پشتیبانی‌شده پیدا نشد."
-    fi
-fi
-
-ok "curl و unzip آماده هستند."
 
 ###############################################################################
 # TEMP
@@ -96,71 +77,130 @@ trap cleanup EXIT
 mkdir -p "$APP_DIR"
 
 ###############################################################################
-# VERSION
+# REQUIREMENTS
+###############################################################################
+
+echo "[1/6] آماده‌سازی سیستم..."
+echo
+
+if command -v apt-get >/dev/null 2>&1; then
+
+    echo "در حال به‌روزرسانی مخازن..."
+
+    export DEBIAN_FRONTEND=noninteractive
+
+    apt-get update -y
+
+    echo
+    echo "در حال بررسی curl و unzip..."
+
+    apt-get install -y curl unzip
+
+elif command -v dnf >/dev/null 2>&1; then
+
+    dnf install -y curl unzip
+
+elif command -v yum >/dev/null 2>&1; then
+
+    yum install -y curl unzip
+
+else
+
+    fail "Package Manager پشتیبانی‌شده پیدا نشد."
+
+fi
+
+if ! command -v curl >/dev/null 2>&1; then
+    fail "curl نصب نشد."
+fi
+
+if ! command -v unzip >/dev/null 2>&1; then
+    fail "unzip نصب نشد."
+fi
+
+ok "پیش‌نیازها آماده هستند."
+
+###############################################################################
+# VERSION SELECTION
 ###############################################################################
 
 echo
-echo "[2/6] بررسی نسخه..."
+echo "[2/6] انتخاب نسخه..."
+echo
 
 if [ -n "$REQUESTED_VERSION" ]; then
 
     VERSION="$REQUESTED_VERSION"
 
+    echo "نسخه انتخاب‌شده:"
     echo
-    echo "نسخه انتخاب‌شده: $VERSION"
+    echo "  $VERSION"
     echo
 
 else
 
     echo "نسخه‌ای مشخص نشده است."
-    echo "در حال پیدا کردن آخرین نسخه..."
+    echo "در حال پیدا کردن آخرین Release..."
 
     LATEST_URL="https://github.com/${REPO}/releases/latest"
 
     FINAL_URL="$(
         curl -sSIL \
-        --max-time 20 \
-        -o /dev/null \
-        -w '%{url_effective}' \
-        "$LATEST_URL" \
-        2>/dev/null
-    )" || true
+            --connect-timeout 20 \
+            --max-time 30 \
+            -o /dev/null \
+            -w '%{url_effective}' \
+            "$LATEST_URL" \
+            2>/dev/null || true
+    )"
 
     VERSION="$(
         printf '%s\n' "$FINAL_URL" |
-        sed -nE 's#.*/releases/tag/([^/?#]+).*#\1#p'
+        sed -nE 's#^.*/releases/tag/([^/?#]+).*$#\1#p' |
+        head -n 1
     )"
 
     if [ -z "$VERSION" ]; then
 
         echo
-        warn "تشخیص خودکار آخرین نسخه ناموفق بود."
+        warn "آخرین نسخه به‌صورت خودکار تشخیص داده نشد."
         echo
-        echo "اگر نسخه را می‌دانید، می‌توانید مستقیم وارد کنید."
-        echo
-        read -r -p "نسخه را وارد کنید (مثلاً 1.5.0): " VERSION
+
+        read -r -p "شماره نسخه را وارد کنید (مثلاً 1.5.0): " VERSION
 
         if [ -z "$VERSION" ]; then
-            fail "هیچ نسخه‌ای وارد نشد."
+            fail "هیچ نسخه‌ای انتخاب نشد."
         fi
-    fi
 
-    echo
-    ok "آخرین نسخه: $VERSION"
+    else
+
+        echo
+        ok "آخرین نسخه: $VERSION"
+
+    fi
 fi
 
 ###############################################################################
-# VERSION FORMAT
+# VERSION VALIDATION
 ###############################################################################
 
 if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
 
     echo
-    echo "نسخه دریافت‌شده:"
+    echo "نسخه واردشده:"
     echo "$VERSION"
     echo
 
-    fail "فرمت نسخه صحیح نیست. مثال صحیح: 1.5.0"
+    fail "فرمت نسخه نامعتبر است.
+
+نمونه صحیح:
+1.0.0
+1.1.0
+1.2.1
+1.5.0
+2.0.0
+4.0.0"
+
 fi
 
 ###############################################################################
@@ -175,6 +215,7 @@ echo "             DEGERIS $VERSION"
 echo "=============================================="
 echo
 echo "در حال دانلود:"
+echo
 echo "$DOWNLOAD_URL"
 echo
 
@@ -183,6 +224,7 @@ echo
 ###############################################################################
 
 echo "[3/6] دانلود setup.zip..."
+echo
 
 if ! curl -fL \
     --retry 3 \
@@ -193,27 +235,32 @@ if ! curl -fL \
     "$DOWNLOAD_URL"; then
 
     echo
-    fail "نسخه $VERSION یا فایل setup.zip پیدا نشد."
+    fail "دانلود نسخه $VERSION ناموفق بود.
+
+بررسی کنید:
+- Release با Tag $VERSION وجود داشته باشد.
+- فایل $ASSET داخل Release وجود داشته باشد."
+
 fi
 
 if [ ! -s "$ZIP_FILE" ]; then
-    fail "setup.zip خالی است."
+    fail "فایل setup.zip خالی است."
 fi
 
 ok "setup.zip دانلود شد."
 
 ###############################################################################
-# TEST ZIP
+# ZIP TEST
 ###############################################################################
 
 echo
-echo "[4/6] بررسی ZIP..."
+echo "[4/6] بررسی سلامت فایل..."
 
 if ! unzip -t "$ZIP_FILE" >/dev/null 2>&1; then
     fail "setup.zip خراب یا ناقص است."
 fi
 
-ok "ZIP سالم است."
+ok "فایل ZIP سالم است."
 
 ###############################################################################
 # EXTRACT
@@ -221,48 +268,64 @@ ok "ZIP سالم است."
 
 echo
 echo "[5/6] استخراج فایل‌ها..."
+echo
 
-unzip -q "$ZIP_FILE" -d "$APP_DIR"
+if ! unzip -q "$ZIP_FILE" -d "$APP_DIR"; then
+    fail "استخراج setup.zip ناموفق بود."
+fi
 
-ok "فایل‌ها Extract شدند."
+ok "فایل‌ها استخراج شدند."
 
 ###############################################################################
-# FIND INSTALLER
+# FIND ORIGINAL INSTALLER
 ###############################################################################
 
 echo
 echo "[6/6] پیدا کردن Installer اصلی..."
+echo
 
 ORIGINAL_INSTALLER=""
 
 if [ -f "$APP_DIR/install.sh" ]; then
+
     ORIGINAL_INSTALLER="$APP_DIR/install.sh"
+
 else
+
     ORIGINAL_INSTALLER="$(
         find "$APP_DIR" \
-        -type f \
-        -name "install.sh" \
-        -print -quit
+            -type f \
+            -name "install.sh" \
+            -print -quit
     )"
+
 fi
 
 if [ -z "$ORIGINAL_INSTALLER" ] || [ ! -f "$ORIGINAL_INSTALLER" ]; then
 
     echo
-    echo "فایل‌های داخل setup.zip:"
-    find "$APP_DIR" -maxdepth 3 -type f | head -50
+    echo "فایل‌های موجود در setup.zip:"
     echo
 
-    fail "install.sh داخل setup.zip پیدا نشد."
+    find "$APP_DIR" -maxdepth 4 -type f | head -100
+
+    echo
+
+    fail "install.sh داخل setup.zip نسخه $VERSION پیدا نشد."
+
 fi
 
 chmod +x "$ORIGINAL_INSTALLER"
 
 ok "Installer اصلی پیدا شد."
 
+###############################################################################
+# RUN ORIGINAL INSTALLER
+###############################################################################
+
 echo
 echo "=============================================="
-echo "      شروع نصب Degeris نسخه $VERSION"
+echo "       شروع نصب Degeris نسخه $VERSION"
 echo "=============================================="
 echo
 
@@ -272,12 +335,18 @@ cd "$INSTALLER_DIR"
 
 bash "$ORIGINAL_INSTALLER"
 
+###############################################################################
+# COMPLETE
+###############################################################################
+
 echo
 echo "=============================================="
 echo "        DEGERIS INSTALLATION COMPLETED"
 echo "=============================================="
 echo
-echo "نسخه نصب‌شده: $VERSION"
+echo "نسخه نصب‌شده:"
+echo
+echo "    $VERSION"
 echo
 echo "برای اجرای منوی مدیریت پنل:"
 echo
